@@ -1,6 +1,6 @@
 /usr/bin/bash
 useradd sonar
-yum install wget unzip java-11-openjdk-devel -y 
+yum install wget unzip java-11-openjdk-devel net-tolls telnet -y 
 wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.1.0.47736.zip
 unzip sonarqube-9.1.0.47736.zip -d /opt/
 mv /opt/sonarqube-9.1.0.47736 /opt/sonarqube

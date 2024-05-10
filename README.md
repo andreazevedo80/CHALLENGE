@@ -1,67 +1,198 @@
 # Considerações Gerais
 
-Você deverá subir esse projeto no github (gitlab ou similares) e todos os seus commits devem estar registrados, pois queremos ver como você trabalha.
+Ter instalado no WINDOWS:
+- Oracle VM Virtual BOX instalado
+- Vagrant
+- Visual Studio Code (Todos os arquivos / comandos foram criados/executados pelo terminal)
 
-A escolha de tecnologias é livre para a resolução do problema. Utilize os componentes e serviços que melhor domina pois a apresentação na entrega do desafio deverá ser como uma aula em que você explica em detalhes cada decisão que tomou.
+# Instação do Sonarqube
 
-Registre tudo: testes que foram executados, ideias que gostaria de implementar se tivesse tempo (explique como você as resolveria, se houvesse tempo), decisões que foram tomadas e seus porquês, arquiteturas que foram testadas e os motivos de terem sido modificadas ou abandonadas. Crie um arquivo COMMENTS.md ou HISTORY.md no repositório para registrar essas reflexões e decisões.
+acessar a pasta Challenge\sonar
+executar:
+vagrant up
+vagrant provision
+
+acessar o sonar: localhost:9000
+usuário: admin
+senha: admin
+* alterar a senha
+
+Challenge\jenkins
+
+# Instação do Jenkins
+
+- acessar a pasta Challenge\jenkins e executar:
+vagrant up
+vagrant provision
+
+- após instalação acessar via ssh
+vagrant ssh
+
+- copiar a senha do administrador: 
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+*copia a senha
+
+- adicionar o usuário jenkins ao grupo docker
+sudo usermod -aG docker jenkins
+
+-acessar o jenkins: localhost:8080
+cola a senha
+
+- Instalar as extensões sugeridas
+
+criar usuário jenkins/jenkins
+
+- criar um trabalho
+- criar pipeline
+Nome: API_Comentario
+- Pipeline
+- Definition
+Pileline script
+- SCM
+Git
+-repositório
+https://github.com/XXXX/API_Comentario.git
+-Credentials:
+-add
+
+# instalar extensão do sonar no jenkins
+- painel de controle
+- gerenciar jenkins
+- Plugins
+- Extensões disponíveis
+SonarQube Scanner
+instalar
+
+#configurar servidor do sonar no jenkins
+- painel de controle
+- gerenciar jenkins
+- System
+- SonarQube servers
+Environment variables
+Name: soanr-server
+server URL: http://192.168.10.6:9000
+- add Credentials
+- kind
+secret text
+- Secret
+copia o token do sonar
+- id
+secret-sonar
+
+# Configuar a ferramenta do sonar-scanner no Jenkins
+
+- painel de controle
+- Gerenciar Jenkins
+- Tools
+- SonarQube Scanner
+- Name
+sonar-scanner
+- SONAR_RUNNER_HOME
+/opt/sonar-scanner
+
+# Configurando o Nexus no Jenkins
+
+acesse via ssh
+docker volume create --name nexus-data
+docker run -d -p 8081:8081 -p 8123:8123 --name nexus -v nexus-data:/nexus-data sonatype/nexus3
+docker logs -f nexus
+	Result Started Sonartype Nexus
+	
+# Criando usuário nexus
+
+acessar via ssh o jenkins
+docker exec -it nexus bash
+cat /nexus-data/admin.password
+
+altere a senha para nexus, usu´~ario admin
+disable anonymous access
+
+- server administration
+- usermod
+- create local user
+id: jenkins
+first name: jenkins
+last name: jenkins
+e-mail: jenkins@jenkins.com.br
+password: jenkins
+confirm password: jenkins
+status: Active
+roles: nx-admin
+
+# Instalar o kuctl no jenkins
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+usermod -s /bin/bash jenkins
+sudo su - jenkins
+id
+mkdir ~/.kube
+vi ~/.kube/configs
+
+acessar o manager (k3s) e copiar (cat /etc/rancher/k3s/k3s.yaml)
 
 
-# O Problema
+su -s /bin/bash jenkins
+ID
+kubectl
 
-O desafio que você deve resolver é a implantação da aplicação de Comentários em versão API (backend) usando ferramentas open source da sua preferência.
+# Instalar o docker no jenkins
 
-Você precisa criar o ambiente de execução desta API com o maior número de passos automatizados possível, inclusive a esteira de deploy.
 
-A aplicação é uma API REST que está disponível neste repositório. Através dela os internautas enviam comentários em texto de uma máteria e acompanham o que outras pessoas estão falando sobre o assunto em destaque. O funcionamento básico da API consiste em uma rota para inserção dos comentários e uma rota para listagem.
+# criar repositório docker
 
-Os comandos de interação com a API são os seguintes:
+- repository
+- repositories
+- create repository
+docker (hosted)
+Name: docker-repo
+HTTP: 8123
 
-* Start da app
-```bash
-cd app
-gunicorn --log-level debug api:app
-```
+# Configurar o Nexus no Jenkins
+- painel de controle
+- gerenciar jenkins
+- System
+- Propriedades globais
+- Váriaveis de ambiente
+- Adicionar
 
-* Criando e listando comentários por matéria
-```bash
-# matéria 1
-curl -sv localhost:8000/api/comment/new -X POST -H 'Content-Type: application/json' -d '{"email":"alice@example.com","comment":"first post!","content_id":1}'
-curl -sv localhost:8000/api/comment/new -X POST -H 'Content-Type: application/json' -d '{"email":"alice@example.com","comment":"ok, now I am gonna say something more useful","content_id":1}'
-curl -sv localhost:8000/api/comment/new -X POST -H 'Content-Type: application/json' -d '{"email":"bob@example.com","comment":"I agree","content_id":1}'
+nome: NEXUS_URL
+valor: 192.168.1.6:8123
 
-# matéria 2
-curl -sv localhost:8000/api/comment/new -X POST -H 'Content-Type: application/json' -d '{"email":"bob@example.com","comment":"I guess this is a good thing","content_id":2}'
-curl -sv localhost:8000/api/comment/new -X POST -H 'Content-Type: application/json' -d '{"email":"charlie@example.com","comment":"Indeed, dear Bob, I believe so as well","content_id":2}'
-curl -sv localhost:8000/api/comment/new -X POST -H 'Content-Type: application/json' -d '{"email":"eve@example.com","comment":"Nah, you both are wrong","content_id":2}'
+- painel de controle
+- gerenciar jenkins
+- Credentials
+- System
+- Global credentials (unrestricted)
+- Add Credentials
+username: jenkins
+password: jenkins
+ID: nexus-user
 
-# listagem matéria 1
-curl -sv localhost:8000/api/comment/list/1
+# Instalar o Kubernets
+- acessar a pasta Challenge\k3s e executar:
+vagrant up
 
-# listagem matéria 2
-curl -sv localhost:8000/api/comment/list/2
-```
+acesse via ssh
+sudo su -
+curl -sfL https://get.k3s.io | sh -s - --cluster-init --tls-san 192.168.10.2 --node-ip 192.168.10.2 --node-external-ip 192.168.10.2
+service k3s status
+kubectl get nodes
+yum install git unzip telnet net-tolls -y
+git clone https://github.com/ahmetb/kubectx /opt/kubectx
+ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
+ln -s /opt/kubectx/kubens /usr/local/bin/kubens
 
-# O que será avaliado na sua solução?
+vi /etc/rancher/k3s/registries.yaml
 
-- Automação e configuração da Infraestrutura (IaC);
-- A entrega e integração contínua (CI/CD);
-- Monitoramento dos serviços e métricas da aplicação;
-- Criatividade;
-- Resultados alcançados.
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://192.168.10.5:8123"
+configs:
+  "192.168.10.5:8123":
+    auth:
+      username: jenkins # this is the registry username
+      password: jenkins # this is the registry password
 
-# Diferenciais
+systemctl restart k3s.service
 
-- Desenho da arquitetura da aplicação;
-- Subir a aplicação em um cluster kubernetes (local ou cloud);
-- Rota de status que retorne o texto “ok”;
-- Todas as rotas metrificadas;
-- Dashboards (grafana por exemplo) com gráficos próximos ao tempo real;
-- Deverá ser acessível pela url http://comments.devops-challenge.globo.local;
-- A aplicação deverá passar por um teste de carga.
-
-# Dicas
-
-- Use ferramentas e bibliotecas open source, mas documente as decisões e porquês;
-- Automatize o máximo possível;
-- Em caso de dúvidas, pergunte.
