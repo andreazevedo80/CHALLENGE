@@ -156,7 +156,7 @@ HTTP: 8123
 - Adicionar
 
 nome: NEXUS_URL
-valor: 192.168.1.6:8123
+valor: localhost:8123
 
 - painel de controle
 - gerenciar jenkins
