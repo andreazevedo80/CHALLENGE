@@ -57,7 +57,7 @@ sudo systemctl enable docker
 sudo systemctl enable k3s
 sudo systemctl enable nexus
 
-# Validação da instalação
+# Validando a instalação
 echo "Validando instalação..."
 echo "Serviços instalados:"
 systemctl status jenkins docker k3s nexus | grep active
